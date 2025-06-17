@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing SonarQube Scanner...
+      - curl -sSLo sonar-scanner-cli.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      - unzip sonar-scanner-cli.zip
+      - mv sonar-scanner-5.0.1.3006-linux sonar-scanner
+      - export PATH=$PATH:$(pwd)/sonar-scanner/bin
+
+  build:
+    commands:
+      - echo Running SonarQube Analysis...
+      - ./sonar-scanner/bin/sonar-scanner \
+          -Dsonar.projectKey=Capstone_Project \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=http://54.145.37.71:9000 \
+          -Dsonar.login=sqp_374b1db7b42cfab2081079f8151d2f5dbb244b06
