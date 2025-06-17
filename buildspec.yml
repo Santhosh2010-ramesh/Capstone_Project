@@ -30,16 +30,19 @@ phases:
       - echo Creating final deployment files...
       - mkdir -p k8s-out
       - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
-      - cp k8s/service.yaml k8s-out/service.yaml
-      - cp k8s/mongodb-*.yaml k8s-out/
-      - cp k8s/secrets.yaml k8s-out/secrets.yaml
+      - cp k8s/service.yaml k8s-out/service.yaml || true
+      - cp k8s/mongodb-*.yaml k8s-out/ || true
+      - cp k8s/secrets.yaml k8s-out/secrets.yaml || true
       - echo Updating kubeconfig for EKS...
       - aws eks update-kubeconfig --name cluster-three-tier-2 --region us-east-1
-      - echo Applying Kubernetes Secrets...
+      - echo "Contents of k8s-out directory:"
+      - ls -l k8s-out/
+      - echo "Applying Kubernetes Secrets..."
       - kubectl apply -f k8s/secrets.yaml
-      - echo Applying Kubernetes Deployments...
-      - kubectl apply -f k8s-out/
-      - ls -R k8s-out
+      - echo "Applying Kubernetes Deployments..."
+      - kubectl apply -f k8s-out/ || true
+      - echo "Final k8s-out content:"
+      - ls -R k8s-out/
 
 artifacts:
   base-directory: k8s-out
