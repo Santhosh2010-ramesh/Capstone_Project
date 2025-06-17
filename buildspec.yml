@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18  # or 16 or 20 depending on your project needs
+      nodejs: 18
     commands:
       - echo Installing Node.js dependencies...
       - npm install
@@ -32,6 +32,11 @@ phases:
       - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
       - cp k8s/service.yaml k8s-out/service.yaml
       - cp k8s/mongodb-*.yaml k8s-out/
+      - cp k8s/secrets.yaml k8s-out/secrets.yaml
+      - echo Applying Kubernetes Secrets...
+      - kubectl apply -f k8s/secrets.yaml
+      - echo Applying Kubernetes Deployments...
+      - kubectl apply -f k8s-out/
       - ls -R k8s-out
 
 artifacts:
@@ -41,3 +46,4 @@ artifacts:
     - service.yaml
     - mongodb-deployment.yaml
     - mongodb-service.yaml
+    - secrets.yaml
