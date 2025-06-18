@@ -1,67 +1,52 @@
-version: 0.2
-
-phases:
-  install:
-    runtime-versions:
-      nodejs: 18
-    commands:
-      - echo Installing Node.js dependencies...
-      - npm install
-
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      - ACCOUNT_ID=047719652562
-      - REGION=us-east-1
-      - REPO_NAME=newecr_capstone_repo
-      - IMAGE_TAG=latest
-      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
-  build:
-    commands:
-      - echo Building Docker image...
-      - docker build -t ${REPO_NAME}:${IMAGE_TAG} .
-      - docker tag ${REPO_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-
-  post_build:
-    commands:
-      - echo Pushing Docker image to Amazon ECR...
-      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-      
-      - echo Creating final deployment files...
-      - mkdir -p k8s-out
-
-      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
-      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/seed.yaml > k8s-out/seed.yaml
-
-      - cp k8s/service.yaml k8s-out/service.yaml
-      - cp k8s/mongodb-*.yaml k8s-out/
-      - cp k8s/secrets.yaml k8s-out/secrets.yaml
-
-      - echo Updating kubeconfig for EKS...
-      - aws eks update-kubeconfig --name cluster-three-tier-2 --region us-east-1
-
-      - echo Applying Kubernetes Secrets...
-      - kubectl apply -f k8s/secrets.yaml
-
-      - echo Applying Kubernetes Deployments...
-      - kubectl apply -f k8s-out/
-
-      - echo Running database seed job...
-      - kubectl apply -f k8s-out/seed.yaml
-      - echo Waiting for seed job to complete...
-      - kubectl wait --for=condition=complete job/seed-job --timeout=120s
-      - echo Seed job finished. Deleting job...
-      - kubectl delete job seed-job || true
-
-      - ls -R k8s-out
-
-artifacts:
-  base-directory: k8s-out
-  files:
-    - deployment.yaml
-    - service.yaml
-    - mongodb-deployment.yaml
-    - mongodb-service.yaml
-    - secrets.yaml
-    - seed.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bestbags
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bestbags
+  template:
+    metadata:
+      labels:
+        app: bestbags
+    spec:
+      containers:
+        - name: bestbags
+          image: IMAGE_PLACEHOLDER #026090546401.dkr.ecr.us-east-1.amazonaws.com/mock
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_URI
+              value: mongodb://mongodb-service:27017/bags-ecommerce
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: session-secret
+                  key: SESSION_SECRET
+            - name: STRIPE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret
+                  key: STRIPE_PRIVATE_KEY
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_PASSWORD
+            - name: ADMIN_COOKIE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_COOKIE_NAME
+            - name: ADMIN_COOKIE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_COOKIE_PASSWORD
