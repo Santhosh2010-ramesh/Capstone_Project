@@ -14,8 +14,4 @@ phases:
   build:
     commands:
       - echo Running SonarQube Analysis...
-      - ./sonar-scanner/bin/sonar-scanner \
-          -Dsonar.projectKey=Capstone_Project \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=http://13.220.51.86:9000 \
-          -Dsonar.login=sqp_374b1db7b42cfab2081079f8151d2f5dbb244b06
+      - ./sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=Capstone_Project -Dsonar.sources=. -Dsonar.host.url=http://13.220.51.86:9000 -Dsonar.login=sqp_374b1db7b42cfab2081079f8151d2f5dbb244b06
