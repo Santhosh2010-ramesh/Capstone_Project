@@ -4,17 +4,19 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
+      docker: 20
     commands:
       - echo "Installing Node.js dependencies..."
       - npm install
 
   pre_build:
     commands:
-      - echo "Logging in to Amazon ECR..."
+      - echo "Setting variables..."
       - ACCOUNT_ID=047719652562
       - REGION=us-east-1
       - REPO_NAME=newecr_capstone_repo
       - IMAGE_TAG=latest
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
   build:
@@ -36,10 +38,10 @@ phases:
       - cp k8s/secrets.yaml k8s-out/secrets.yaml || true
 
       - echo "Updating kubeconfig for EKS..."
-      - aws eks update-kubeconfig --name cluster-three-tier-2 --region us-east-1
+      - aws eks update-kubeconfig --name cluster-three-tier-2 --region $REGION
 
       - echo "Applying Kubernetes Secrets..."
-      - kubectl apply -f k8s/secrets.yaml
+      - kubectl apply -f k8s/secrets.yaml || true
 
       - echo "Applying Kubernetes Deployments..."
       - kubectl apply -f k8s-out/ || true
